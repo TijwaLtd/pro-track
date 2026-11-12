@@ -1,0 +1,62 @@
+{
+  "description": "Animal and plant avatars for project items. Flat vector illustrations, one consistent style, transparent background, no text, bundled locally.",
+  "assets": {
+    "folder": "assets/avatars/",
+    "format": "svg",
+    "viewBox": "0 0 512 512",
+    "style": "flat shapes, 2-3 colours each, no outlines, centered with 12% padding",
+    "licenseNote": "Use a properly licensed or self-made set; record the license in assets/avatars/LICENSE.md",
+    "phase0Fallback": "render the emoji below until SVGs are added"
+  },
+  "render": {
+    "container": "avatarBadge on projectSoftTint of the item's project colour",
+    "accessibilityLabel": "{label} avatar"
+  },
+  "groups": [
+    {
+      "id": "animals",
+      "label": "Animals",
+      "items": [
+        { "key": "lion", "label": "Lion", "emoji": "🦁" },
+        { "key": "elephant", "label": "Elephant", "emoji": "🐘" },
+        { "key": "giraffe", "label": "Giraffe", "emoji": "🦒" },
+        { "key": "zebra", "label": "Zebra", "emoji": "🦓" },
+        { "key": "rhino", "label": "Rhino", "emoji": "🦏" },
+        { "key": "flamingo", "label": "Flamingo", "emoji": "🦩" },
+        { "key": "hippo", "label": "Hippo", "emoji": "🦛" },
+        { "key": "cheetah", "label": "Cheetah", "emoji": "🐆" },
+        { "key": "tortoise", "label": "Tortoise", "emoji": "🐢" },
+        { "key": "owl", "label": "Owl", "emoji": "🦉" },
+        { "key": "fox", "label": "Fox", "emoji": "🦊" },
+        { "key": "bee", "label": "Bee", "emoji": "🐝" }
+      ]
+    },
+    {
+      "id": "plants",
+      "label": "Plants",
+      "items": [
+        { "key": "acacia", "label": "Acacia", "emoji": "🌳" },
+        { "key": "baobab", "label": "Baobab", "emoji": "🌴" },
+        { "key": "aloe", "label": "Aloe", "emoji": "🪴" },
+        { "key": "cactus", "label": "Cactus", "emoji": "🌵" },
+        { "key": "sunflower", "label": "Sunflower", "emoji": "🌻" },
+        { "key": "tulip", "label": "Tulip", "emoji": "🌷" },
+        { "key": "lotus", "label": "Lotus", "emoji": "🪷" },
+        { "key": "bamboo", "label": "Bamboo", "emoji": "🎋" },
+        { "key": "fern", "label": "Fern", "emoji": "🌿" },
+        { "key": "clover", "label": "Clover", "emoji": "🍀" },
+        { "key": "mushroom", "label": "Mushroom", "emoji": "🍄" },
+        { "key": "seedling", "label": "Seedling", "emoji": "🌱" }
+      ]
+    }
+  ],
+  "defaultRule": "on new item pick a random avatar not already used in that project (fallback: any); user can Shuffle or choose",
+  "pickerSheet": {
+    "name": "avatarPicker",
+    "snapPoints": ["60%"],
+    "header": { "title": "Pick a buddy", "right": { "type": "iconButton", "icon": "shuffle", "a11yLabel": "Shuffle" } },
+    "tabs": ["Animals", "Plants"],
+    "grid": { "columns": 4, "gap": 12, "tile": "avatarTile" },
+    "onSelect": "return avatar_key to caller and close (chat form continues; edit saves immediately)"
+  }
+}

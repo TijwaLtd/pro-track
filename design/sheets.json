@@ -1,0 +1,41 @@
+{
+  "sheets": {
+    "settings": {
+      "title": "Settings",
+      "snapPoints": ["60%"],
+      "items": [
+        { "label": "Lock after", "type": "select", "options": ["Immediately", "30 seconds", "1 minute", "5 minutes"], "default": "30 seconds" },
+        { "label": "Week starts on", "type": "segmented", "options": ["Mon", "Sun"], "default": "Mon" },
+        { "label": "Default reminder", "type": "select", "options": ["At due time", "1 hour before", "1 day before"], "default": "1 hour before" },
+        { "label": "Export backup", "type": "action", "note": "Creates a zip of data and evidence you can save or share" },
+        { "label": "About", "type": "info", "value": "version and schema version" }
+      ],
+      "removed": ["Change PIN"]
+    },
+    "evidenceViewer": {
+      "presentation": "full-screen modal, dark background",
+      "header": { "left": "close", "center": "{n} of {total}", "right": "share" },
+      "image": "pinch-zoom, double-tap zoom",
+      "pdf": "open with system viewer",
+      "missingFile": "centered 'File missing' message with what is known (name, date); no crash",
+      "footer": { "meta": "filename · size · added {date}", "action": "Remove evidence (confirm; logs the action; warns if the payment would have none left)" }
+    },
+    "avatarPicker": { "spec": "design/avatars.json#pickerSheet" },
+    "editProject": {
+      "title": "Edit project",
+      "fields": ["name", "colour (swatches)", "description", "start date", "target end", "status"],
+      "actions": { "primary": "Save", "secondary": "Cancel" }
+    },
+    "editItem": {
+      "title": "Edit item",
+      "fields": ["title", "avatar (opens avatarPicker)", "due date", "time", "cost", "reminder", "notes", "priority"],
+      "warnings": ["changing cost on an item with payments shows the new balance before saving"],
+      "actions": { "primary": "Save", "secondary": "Cancel" }
+    },
+    "editPayment": {
+      "title": "Edit payment",
+      "fields": ["amount", "method", "date", "message (verbatim)", "reference (optional)", "notes"],
+      "note": "edits are logged in activity_logs; voiding is a separate action with a required reason"
+    }
+  }
+}

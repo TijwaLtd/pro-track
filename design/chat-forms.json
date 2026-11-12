@@ -1,0 +1,77 @@
+{
+  "component": "ChatForm",
+  "usedFor": ["newProject", "newItem", "newPayment"],
+  "notAIPowered": true,
+  "presentation": "full-screen modal, slides up",
+  "layout": {
+    "header": { "left": { "type": "iconButton", "icon": "x", "a11yLabel": "Close", "onPress": "if any answer given: confirm 'Discard this?' else close" }, "center": { "type": "text", "value": "{flow title}", "typography": "label" }, "right": { "type": "iconButton", "icon": "undo", "a11yLabel": "Back one step", "visibleIf": "step > 1" } },
+    "messages": { "type": "scroll", "padding": "xl", "gap": "md", "autoScrollToLatest": true, "background": "colors.background" },
+    "inputDock": { "type": "keyboard-aware bottom area", "bg": "surface", "radiusTop": "xl", "padding": "lg", "swapsPerStep": true, "elevation": "floating" }
+  },
+  "rules": [
+    "One question per turn, short, friendly, lowercase-leaning, no jargon",
+    "Show typing dots ~450ms before each app message (skip when reduce motion is on)",
+    "User answer appears as a right-aligned bubble; selecting an avatar or colour shows it as a small visual bubble",
+    "Tap any earlier answer bubble to change it; the flow rewinds to that step and keeps later answers that are still valid",
+    "Optional steps always show a 'Skip' quick chip",
+    "Never ask for something that can be defaulted",
+    "Final step is a summary card inside the chat with Confirm button and 'Change something' chip",
+    "Draft answers are held in memory only; closing discards them",
+    "Haptic light on each answer; success haptic on confirm"
+  ],
+  "inputTypes": {
+    "text": { "dock": "single-line input + send button", "validation": "required unless step.optional" },
+    "multiline": { "dock": "multiline input + send button" },
+    "colorSwatch": { "dock": "wrap grid of swatchPicker over projectPalette", "liveEffect": "user bubble colour and a mini hero preview update instantly" },
+    "avatar": { "dock": "opens inline avatar grid (Animals | Plants tabs) with Shuffle", "source": "design/avatars.json" },
+    "chips": { "dock": "row/wrap of quickChip", "single": true },
+    "date": { "dock": "quickChips + 'Pick date' opening native date picker" },
+    "time": { "dock": "quickChips + 'Pick time' opening native time picker" },
+    "money": { "dock": "large amount display with currency + numeric keypad (0-9, ., backspace) + optional quick chips", "storage": "convert to minor units; no floats" },
+    "paste": { "dock": "large multiline box + 'Paste from clipboard' button + Skip chip + send", "note": "stores text verbatim, no parsing" },
+    "attach": { "dock": "three buttons: Photo, Camera, File + Skip chip + Done once items added", "preview": "thumbnails in a bubble", "multiple": true }
+  },
+  "flows": {
+    "newProject": {
+      "title": "New project",
+      "steps": [
+        { "id": "intro", "app": "hi! let's start a new project.", "type": "none", "auto": true },
+        { "id": "name", "app": "what should we call it?", "type": "text", "field": "name", "maxLength": 80, "required": true },
+        { "id": "color", "app": "pick a colour for {name}.", "type": "colorSwatch", "field": "color_key", "default": "coral" },
+        { "id": "end", "app": "when should it wrap up?", "type": "date", "field": "target_end_date", "chips": ["No date", "End of this month", "Pick a date"], "optional": true },
+        { "id": "summary", "app": "all set? here's your project.", "type": "summaryCard", "card": "mini hero in chosen colour with name and target date", "confirm": "Create project", "onConfirm": "insert project + activity log; close; open Project Detail; toast 'project created'" }
+      ],
+      "firstRun": "intro text becomes 'hi! let's set up your first project.'"
+    },
+    "newItem": {
+      "title": "New item",
+      "steps": [
+        { "id": "title", "app": "what needs doing?", "type": "text", "field": "title", "maxLength": 120, "required": true },
+        { "id": "avatar", "app": "pick a buddy for it.", "type": "avatar", "field": "avatar_key", "default": "random per avatars.json" },
+        { "id": "due", "app": "when is it due?", "type": "date", "field": "due_date", "chips": ["Today", "Tomorrow", "This week", "Pick a date", "No date"] },
+        { "id": "time", "app": "any specific time?", "type": "time", "field": "due_time", "chips": ["All day", "Morning", "Afternoon", "Pick a time"], "visibleIf": "due_date set", "optional": true },
+        { "id": "cost", "app": "does it cost anything?", "type": "chips", "chips": ["No", "Yes"], "field": "has_cost" },
+        { "id": "amount", "app": "how much?", "type": "money", "field": "expected_amount", "currency": "project.currency_code", "visibleIf": "has_cost == Yes", "required": true },
+        { "id": "reminder", "app": "want a nudge?", "type": "chips", "chips": ["Yes, as usual", "1 hour before", "1 day before", "No thanks"], "field": "reminder", "visibleIf": "due_date set" },
+        { "id": "notes", "app": "anything to remember?", "type": "multiline", "field": "description", "optional": true },
+        { "id": "summary", "app": "looks good? here's the item.", "type": "summaryCard", "card": "avatar on project tint, title, due, cost", "confirm": "Add item", "onConfirm": "transaction: insert item + activity log + schedule reminder; close; toast 'added'" }
+      ],
+      "maxQuestionsShown": 6,
+      "note": "Conditional steps are skipped, so a simple item is title, buddy, due, cost, nudge."
+    },
+    "newPayment": {
+      "title": "Record payment",
+      "steps": [
+        { "id": "amount", "app": "how much did you pay?", "type": "money", "field": "amount", "currency": "item.currency_code", "chips": ["Balance {outstanding}"], "chipsVisibleIf": "outstanding > 0", "required": true, "warnIf": "amount > outstanding: 'that's {x} over what's owed, ok?' (allowed)" },
+        { "id": "method", "app": "how did you pay?", "type": "chips", "chips": ["M-Pesa", "Cash", "Bank", "Card", "Other"], "field": "method", "default": "M-Pesa" },
+        { "id": "message", "app": "paste the M-Pesa message here.", "type": "paste", "field": "raw_confirmation_text", "visibleIf": "method in [M-Pesa, Bank]", "optional": true, "storage": "verbatim, no parsing", "duplicateWarning": "if identical text (trimmed, whitespace collapsed) exists on another recorded payment: 'looks like you've pasted this one before. save anyway?'" },
+        { "id": "when", "app": "when was that?", "type": "date", "field": "paid_at", "chips": ["Just now", "Earlier today", "Yesterday", "Pick date & time"] },
+        { "id": "evidence", "app": "got a screenshot or receipt?", "type": "attach", "field": "evidence", "optional": true, "storage": "copy to app-private evidence/<paymentId>/, record sha256, mime, size" },
+        { "id": "notes", "app": "any note?", "type": "text", "field": "notes", "optional": true },
+        { "id": "summary", "app": "ready? here's the payment.", "type": "summaryCard", "card": "amount, method, date, message preview (2 lines), evidence thumbs, new balance", "confirm": "Save payment", "onConfirm": "single transaction: payment + evidence rows + activity log; copy files before commit and clean up on failure; toast 'payment saved'" }
+      ]
+    }
+  },
+  "editMode": "Edit actions open compact flat sheets with all fields on one page; ChatForm is only for creating.",
+  "a11y": { "liveRegion": "announce each new app message", "inputFocus": "focus moves to the dock input on each step", "keyboardOrder": "chips and buttons reachable in order" }
+}

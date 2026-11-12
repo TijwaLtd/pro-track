@@ -1,0 +1,186 @@
+{
+  "screen": "project-item",
+  "route": "app/item/[id].tsx",
+  "background": "colors.surface",
+  "layout": "scrollable card, full-bleed top image replaced by project-colour hero",
+  "hero": {
+    "height": 240,
+    "background": "project.color",
+    "art": "decorativeArt large, behind avatar",
+    "radiusBottom": "xl",
+    "avatar": { "type": "avatarBadge", "size": 160, "source": "item.avatar_key", "position": "center", "onPress": "open avatarPicker (saves immediately)", "a11yLabel": "Change avatar" },
+    "overlay": [
+      { "type": "iconButton", "icon": "arrow-left", "position": "top-left", "a11yLabel": "Back" },
+      { "type": "iconButton", "icon": "more-horizontal", "position": "top-right", "menu": ["Edit item", "Cancel item", "Archive item"] }
+    ],
+    "chip": { "text": "{project.name}", "position": "bottom-left", "bg": "rgba(255,255,255,0.25)", "color": "onColor" }
+  },
+  "content": {
+    "padding": { "h": "xl", "top": "xl", "bottom": 120 },
+    "blocks": [
+      {
+        "id": "title",
+        "type": "text",
+        "value": "{item.title}",
+        "typography": "display",
+        "extra": { "type": "statusChip", "source": "completion status", "position": "inline-below" }
+      },
+      {
+        "id": "infoRows",
+        "type": "infoList",
+        "rowGap": "lg",
+        "rows": [
+          {
+            "icon": { "bg": "project.softTint", "glyph": "calendar", "size": 56, "radius": "pill" },
+            "primary": "{due_date long format}",
+            "secondary": "{due_time or 'All day'}{overdueSuffix}",
+            "divider": true
+          },
+          {
+            "icon": { "bg": "project.softTint", "glyph": "wallet", "size": 56, "radius": "pill" },
+            "primary": "{money(expected)}",
+            "secondary": "Paid {money(paid)} · Outstanding {money(outstanding)}",
+            "trailing": { "type": "statusChip", "source": "statusStyles.payment" },
+            "visibleIf": "expected != null",
+            "overpaid": "show 'Overpaid {amount}' in accent"
+          },
+          {
+            "icon": { "glyph": "bell" },
+            "primary": "{reminder summary}",
+            "action": "edit reminder (select sheet)",
+            "visibleIf": "due_date set"
+          }
+        ]
+      },
+      {
+        "id": "notes",
+        "type": "text",
+        "value": "{item.description}",
+        "typography": "body",
+        "color": "textSecondary",
+        "collapse": { "maxLines": 4, "toggle": "Read more" },
+        "visibleIf": "description"
+      },
+      {
+        "id": "paymentsSection",
+        "visibleIf": "expected != null or payments.length > 0",
+        "header": {
+          "layout": "row-space-between",
+          "left": { "type": "text", "value": "Payments", "typography": "heading" },
+          "right": { "type": "textButton", "label": "+ Add payment", "action": "openChatForm:newPayment", "color": "accent" }
+        },
+        "list": {
+          "rowGap": "md",
+          "paymentCard": {
+            "bg": "surfaceMuted",
+            "radius": "lg",
+            "padding": "lg",
+            "top": [
+              { "type": "text", "value": "{money(amount)}", "typography": "heading" },
+              { "type": "chip", "text": "{method}" }
+            ],
+            "middle": [
+              { "type": "text", "value": "{paid_at formatted}", "typography": "caption", "color": "textSecondary" }
+            ],
+            "message": {
+              "type": "collapsibleText",
+              "title": "M-Pesa message",
+              "value": "{raw_confirmation_text}",
+              "collapsedLines": 2,
+              "actions": ["Copy"],
+              "visibleIf": "raw_confirmation_text"
+            },
+            "evidence": {
+              "type": "thumbnailRow",
+              "thumbSize": 56,
+              "items": ["image thumbnails", "pdf/doc icon tile"],
+              "onPress": "sheets.json#evidenceViewer",
+              "emptyWarning": { "text": "No evidence attached", "color": "warning", "action": "Add evidence" },
+              "missingFile": "show broken-file tile with 'File missing' and no crash"
+            },
+            "voided": {
+              "style": "strikethrough amount, 60% opacity, chip 'Voided · {reason}'",
+              "excludedFromTotals": true
+            },
+            "menu": ["Edit (sheets.json#editPayment)", "Add evidence", "Void payment"],
+            "a11yLabel": "{amount} paid by {method} on {date}, {n} evidence items"
+          },
+          "duplicateWarning": "chip 'Same message as another payment' when raw text matches another recorded payment"
+        },
+        "empty": { "text": "No payments recorded yet", "action": "Add payment" }
+      },
+      {
+        "id": "activity",
+        "type": "collapsible",
+        "title": "History",
+        "default": "collapsed",
+        "rows": "activity_logs for this item and its payments, newest first"
+      }
+    ]
+  },
+  "bottomActionBar": {
+    "position": "sticky-bottom, safe-area aware",
+    "bg": "surface",
+    "padding": { "h": "xl", "v": "md" },
+    "layout": "row",
+    "gap": "md",
+    "left": {
+      "type": "iconButton",
+      "icon": "bookmark",
+      "bg": "surfaceMuted",
+      "size": 56,
+      "radius": "lg",
+      "role": "Toggle reminder on/off",
+      "a11yLabel": "Toggle reminder"
+    },
+    "primary": {
+      "type": "button",
+      "variant": "primary",
+      "flex": 1,
+      "states": {
+        "open":      { "label": "MARK AS DONE", "bg": "accent" },
+        "completed": { "label": "DONE · REOPEN", "bg": "success", "action": "reopen" },
+        "cancelled": { "label": "REOPEN", "bg": "surfaceMuted" }
+      },
+      "onPressOpen": {
+        "ifBalanceOutstanding": {
+          "prompt": {
+            "title": "{money(outstanding)} still unpaid",
+            "body": "You can record a payment now, or mark the item done anyway.",
+            "actions": [
+              { "label": "Add payment", "style": "primary", "opens": "chatForm:newPayment" },
+              { "label": "Mark done anyway", "style": "secondary", "does": "complete" },
+              { "label": "Cancel", "style": "text" }
+            ]
+          }
+        },
+        "else": "complete immediately",
+        "onComplete": [
+          "transaction: set completion_status=completed, completed_at=now UTC, write activity log, cancel pending reminders",
+          "success haptic",
+          "button morphs to Done state with check animation (base)",
+          "toast 'Marked as done' with Undo (5s)"
+        ]
+      }
+    }
+  },
+  "sheets": {
+    "addPayment": "see chat-forms.json#flows.newPayment",
+    "editPayment": "see sheets.json#editPayment",
+    "voidPaymentSheet": {
+      "title": "Void payment",
+      "body": "The record stays in history but no longer counts toward totals.",
+      "fields": [{ "id": "void_reason", "type": "text", "label": "Reason", "required": true }],
+      "actions": { "primary": "Void payment", "style": "danger" }
+    }
+  },
+  "states": {
+    "loading": "skeleton hero and rows",
+    "notFound": "message and Back",
+    "projectArchived": "read-only, actions disabled with banner"
+  },
+  "a11y": {
+    "primaryAction": "announce 'Marked as done' via accessibility live region",
+    "evidenceThumbs": "labelled 'Evidence {n} of {total}, {type}'"
+  }
+}

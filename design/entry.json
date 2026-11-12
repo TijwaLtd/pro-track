@@ -1,0 +1,53 @@
+{
+  "screens": {
+    "splash": {
+      "route": "app/_layout.tsx (initial gate)",
+      "background": "colors.splashBackground",
+      "layout": "centered column",
+      "elements": [
+        { "type": "logoMark", "size": 96, "style": "white rounded square with coral flag/check glyph" },
+        { "type": "text", "value": "ProTrack", "typography": "title", "color": "#FFFFFF", "style": "lowercase bold" },
+        { "type": "text", "value": "keep your projects close", "typography": "caption", "color": "rgba(255,255,255,0.8)", "transform": "none" }
+      ],
+      "behavior": {
+        "minDurationMs": 800,
+        "tasks": ["open DB", "run migrations", "verify foreign keys + integrity", "load settings"],
+        "then": "go to lock",
+        "onFailure": "show 'Something went wrong' card with Retry and 'Export what I have'; never wipe data automatically"
+      },
+      "animation": "logo scales 0.9 to 1 with fade (base), tagline fades in 150ms later; reduce motion: static",
+      "statusBar": "light"
+    },
+    "lock": {
+      "background": "colors.background",
+      "elements": [
+        { "type": "logoMark", "size": 64 },
+        { "type": "text", "value": "welcome back", "typography": "title" },
+        { "type": "text", "value": "unlock with your phone's security", "typography": "body", "color": "textSecondary" },
+        { "type": "button", "variant": "primary", "label": "UNLOCK", "action": "authenticate" }
+      ],
+      "behavior": {
+        "onMount": "check getEnrolledLevelAsync(); if NONE go to lockRequired; else call authenticate automatically",
+        "authenticate": "LocalAuthentication.authenticateAsync({ promptMessage: 'Unlock ProTrack', disableDeviceFallback: false })",
+        "accepts": "phone password, PIN or pattern; biometrics if enrolled on the phone",
+        "onSuccess": "go to home (or deep link target if opened from a notification)",
+        "onCancelOrFail": "stay on lock; show 'Not unlocked' and keep the UNLOCK button; no custom PIN, no bypass",
+        "relock": "when app is backgrounded longer than settings.lockTimeout (default 30s; options Immediately, 30s, 1 min, 5 min)",
+        "privacy": ["block screenshots and the recents preview with expo-screen-capture on all screens", "no data is rendered on the lock screen"]
+      },
+      "states": ["idle", "prompting", "failed (message + retry)"],
+      "a11y": "UNLOCK button labelled; prompt text is system-provided"
+    },
+    "lockRequired": {
+      "background": "colors.background",
+      "elements": [
+        { "type": "illustration", "value": "padlock in coral on soft tint", "size": 120 },
+        { "type": "text", "value": "set a phone lock first", "typography": "title" },
+        { "type": "text", "value": "ProTrack keeps payment records, so it only opens on phones protected by a password, PIN or pattern.", "typography": "body", "color": "textSecondary", "align": "center" },
+        { "type": "button", "variant": "primary", "label": "OPEN PHONE SETTINGS", "action": "Linking.openSettings()" },
+        { "type": "button", "variant": "secondary", "label": "I've set it, check again", "action": "re-run getEnrolledLevelAsync()" }
+      ],
+      "behavior": "re-check automatically on AppState active; when a lock is found, continue to lock screen. No other navigation is possible."
+    }
+  }
+}

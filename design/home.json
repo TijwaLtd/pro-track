@@ -1,0 +1,155 @@
+{
+  "screen": "home",
+  "route": "app/index.tsx",
+  "background": "colors.background",
+  "safeArea": true,
+  "scroll": { "type": "vertical", "contentPaddingBottom": 112 },
+  "sections": [
+    {
+      "id": "header",
+      "layout": "row-space-between",
+      "padding": { "h": "xl", "top": "md" },
+      "left": { "type": "text", "value": "ProTrack", "typography": "title", "color": "accent", "style": "lowercase bold" },
+      "right": [
+        { "type": "iconButton", "icon": "search", "a11yLabel": "Search projects" },
+        { "type": "iconButton", "icon": "settings", "a11yLabel": "Settings", "action": "openSettingsSheet" }
+      ]
+    },
+    {
+      "id": "weekStrip",
+      "component": "WeekStrip",
+      "padding": { "h": "xl", "top": "lg" },
+      "behavior": {
+        "days": 7,
+        "range": "the week that contains today; first day from settings.weekStart (default monday)",
+        "selectedDefault": "today",
+        "refresh": ["on mount", "on AppState active", "at local midnight via timeout", "on timezone change"],
+        "onSelect": "update selectedDate; hero card shows that day's items; haptic light",
+        "indicators": "up to 3 small dots under the date, one per project that has an open item that day, in that project colour; '+n' not shown"
+      },
+      "dayCell": {
+        "layout": "column-center",
+        "top": { "text": "date number", "typography": "heading" },
+        "bottom": { "text": "weekday short (Mon)", "typography": "caption", "color": "textTertiary" },
+        "size": { "minWidth": 44, "height": 64, "radius": "md" },
+        "states": {
+          "default": { "bg": "transparent" },
+          "today": { "numberColor": "accent" },
+          "selected": { "bg": "surfaceMuted", "numberColor": "textPrimary" },
+          "selectedToday": { "bg": "surfaceMuted", "numberColor": "accent" }
+        },
+        "a11yLabel": "{weekday} {day} {month}, {n} items due"
+      }
+    },
+    {
+      "id": "heroCard",
+      "component": "HeroCarousel",
+      "padding": { "h": "xl", "top": "xl" },
+      "card": { "height": 280, "radius": "xl", "overflow": "hidden", "elevation": "card" },
+      "data": "open/in-progress items with due_date == selectedDate, ordered by due_time asc (nulls last), priority desc",
+      "fallbacks": [
+        { "when": "no items on selected date but later items exist", "show": "nearest upcoming open item with caption 'NEXT UP · {date}'" },
+        { "when": "no items at all", "show": "emptyHero" }
+      ],
+      "slide": {
+        "background": "project.color",
+        "art": "projectColorRules.decorativeArt (semicircle bottom-centre, large circle bottom-right, two small dots)",
+        "content": {
+          "layout": "column",
+          "padding": "xxl",
+          "topRow": [
+            { "type": "chip", "text": "{project.name}", "bg": "rgba(255,255,255,0.22)", "color": "onColor" },
+            { "type": "chip", "text": "{priority}", "visibleIf": "priority in [high, urgent]" }
+          ],
+          "centre": {
+  "type": "column-center",
+  "children": [
+    { "type": "avatarBadge", "size": 120, "source": "item.avatar_key", "bg": "rgba(255,255,255,0.22)" },
+    { "type": "text", "value": "{item.title}", "typography": "title", "align": "center", "color": "onColor", "maxLines": 2 }
+  ]
+},
+          "bottomRow": [
+            { "type": "text", "value": "{due_time or 'All day'}", "typography": "label", "color": "onColor" },
+            {
+              "type": "costBadge",
+              "visibleIf": "expected_amount_minor != null",
+              "text": "{money(expected)} · {paymentStatusLabel}",
+              "bg": "rgba(255,255,255,0.9)",
+              "color": "textPrimary",
+              "radius": "pill"
+            }
+          ]
+        },
+        "onPress": "navigate project item screen",
+        "a11yLabel": "{item.title}, {project.name}, due {time}, {cost summary}"
+      },
+      "pagination": { "type": "dots", "visibleIf": "slides > 1", "position": "below card", "activeColor": "textPrimary" },
+      "emptyHero": {
+        "background": "surfaceMuted",
+        "text": "Nothing scheduled",
+        "subtext": "Add an item to a project to see it here.",
+        "action": { "label": "Start my first project", "opens": "chatForm:newProject" }
+      }
+    },
+    {
+      "id": "projectsHeader",
+      "layout": "row-space-between",
+      "padding": { "h": "xl", "top": "huge" },
+      "left": { "type": "text", "value": "Projects", "typography": "heading" },
+      "right": { "type": "textButton", "label": "Active ▾", "action": "filterMenu", "options": ["Active", "On hold", "Completed", "Archived"] }
+    },
+    {
+      "id": "projectList",
+      "component": "ProjectList",
+      "padding": { "h": "xl", "top": "md" },
+      "rowGap": "md",
+      "row": {
+        "layout": "row",
+        "height": 76,
+        "gap": "md",
+        "thumbnail": {
+          "size": 56,
+          "radius": "md",
+          "bg": "project.color",
+          "art": "miniature of decorativeArt",
+          "initial": "first letter of name in onColor, typography heading"
+        },
+        "body": [
+          { "type": "text", "value": "{project.name}", "typography": "heading", "maxLines": 1 },
+          { "type": "text", "value": "{done} of {eligible} done · next {date}", "typography": "caption", "color": "textSecondary" },
+          { "type": "progressBar", "height": 4, "color": "project.color", "track": "border", "visibleIf": "eligible > 0" }
+        ],
+        "trailing": [
+          { "type": "text", "value": "{money(outstanding)}", "typography": "label", "color": "danger", "visibleIf": "outstanding > 0 and single currency" },
+          { "type": "icon", "icon": "chevron-right", "color": "textTertiary" }
+        ],
+        "onPress": "navigate project detail",
+        "onLongPress": "menu: Edit, Archive",
+        "a11yLabel": "{name}, {done} of {eligible} items done, {outstanding} outstanding"
+      },
+      "emptyState": {
+        "text": "No projects yet",
+        "subtext": "Create your first project and pick a colour.",
+        "action": { "label": "Start my first project", "opens": "chatForm:newProject" }
+      }
+    }
+  ],
+  "bottomBar": {
+    "component": "FloatingBottomBar",
+    "position": "absolute-bottom, safe-area aware",
+    "items": [
+      { "id": "home", "type": "pill", "icon": "home", "label": "HOME", "bg": "accent", "color": "onAccent", "selected": true },
+      { "id": "add", "type": "iconButton", "icon": "plus", "a11yLabel": "New project", "action": "openChatForm:newProject" },
+      { "id": "settings", "type": "iconButton", "icon": "settings", "a11yLabel": "Settings", "action": "openSettingsSheet" }
+    ]
+  },
+  "sheets": {
+    "settingsSheet": "see sheets.json#settings"
+  },
+  "dataQueries": {
+    "weekDots": "items grouped by due_date within week range, status in (open, in_progress), not archived",
+    "hero": "see heroCard.data",
+    "projects": "projects by status filter with counts: eligible = items not cancelled/archived; done = completed; outstanding = sum(max(0, expected - paid)) for non-cancelled items, same currency only"
+  },
+  "states": { "loading": "skeletons for strip, hero, 3 rows", "error": "inline retry card", "offline": "not applicable (fully local)" }
+}

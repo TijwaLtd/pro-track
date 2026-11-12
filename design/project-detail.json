@@ -1,0 +1,103 @@
+{
+  "screen": "project-detail",
+  "route": "app/project/[id].tsx",
+  "background": "colors.background",
+  "header": {
+    "component": "ProjectHeader",
+    "background": "project.color",
+    "art": "decorativeArt (subtle, behind text)",
+    "radiusBottom": "xl",
+    "padding": { "h": "xl", "top": "md", "bottom": "xxl" },
+    "topRow": [
+      { "type": "iconButton", "icon": "arrow-left", "a11yLabel": "Back" },
+      { "type": "iconButton", "icon": "more-horizontal", "a11yLabel": "Project options", "menu": ["Edit project", "Change colour", "Mark completed", "Put on hold", "Archive"] }
+    ],
+    "title": { "value": "{project.name}", "typography": "display", "color": "onColor", "maxLines": 2 },
+    "meta": { "value": "{target_end_date ? 'Target ' + date : 'No target date'}", "typography": "label", "color": "onColor", "opacity": 0.85 },
+    "progress": {
+      "type": "progressBar",
+      "label": "{done} of {eligible} items done",
+      "visibleIf": "eligible > 0",
+      "emptyText": "No items yet"
+    }
+  },
+  "summaryCard": {
+    "overlap": -24,
+    "card": { "bg": "surface", "radius": "lg", "elevation": "card", "padding": "lg" },
+    "layout": "three columns divided by hairlines",
+    "columns": [
+      { "label": "PLANNED", "value": "{money(planned)}" },
+      { "label": "PAID", "value": "{money(paid)}", "color": "success" },
+      { "label": "OUTSTANDING", "value": "{money(outstanding)}", "color": "danger" }
+    ],
+    "rules": [
+      "planned excludes cancelled and archived items",
+      "paid counts only recorded payments with matching currency",
+      "if items span multiple currencies show one summary per currency, never summed",
+      "overpaid shown as a small caption 'Overpaid {amount}' under PAID"
+    ],
+    "hideIf": "no item has an expected amount"
+  },
+  "sections": [
+    {
+      "id": "itemsHeader",
+      "layout": "row-space-between",
+      "padding": { "h": "xl", "top": "xl" },
+      "left": { "type": "text", "value": "Items", "typography": "heading" },
+      "right": { "type": "segmented", "options": ["Open", "Done", "All"], "default": "Open" }
+    },
+    {
+      "id": "itemList",
+      "component": "ItemList",
+      "padding": { "h": "xl", "top": "md" },
+      "sortBy": "due_date asc (nulls last), then created_at",
+      "groupBy": "none",
+      "row": {
+        "layout": "row",
+        "height": 72,
+        "gap": "md",
+        "leading": {
+          "type": "avatarBadge",
+          "size": 48,
+          "source": "item.avatar_key",
+          "bg": "projectSoftTint",
+          "completedStyle": "desaturated with small check badge"
+        },
+        "body": [
+          { "type": "text", "value": "{item.title}", "typography": "heading", "maxLines": 1, "strikethroughIf": "completed" },
+          { "type": "text", "value": "{due_date formatted} {due_time}", "typography": "caption", "color": "textSecondary" },
+          { "type": "text", "value": "OVERDUE", "typography": "caption", "color": "danger", "visibleIf": "due before today and open" }
+        ],
+        "trailing": [
+          { "type": "text", "value": "{money(expected)}", "typography": "label", "visibleIf": "expected != null" },
+          { "type": "statusChip", "source": "statusStyles.payment", "visibleIf": "expected != null" }
+        ],
+        "onPress": "navigate project item",
+        "onLongPress": "menu: openEditItem (sheets.json#editItem), Archive item",
+        "swipe": { "right": "Mark done / Reopen", "left": "Archive item (confirm)" },
+        "a11yLabel": "{title}, due {date}, {amount}, {payment status}, {completion status}"
+      },
+      "quickToggleRules": [
+        "Swipe-right completes through the same prompt as the item screen when a balance is outstanding"
+      ],
+      "emptyState": {
+        "text": "No items yet",
+        "subtext": "Add milestones, tasks or costs for this project.",
+        "action": { "label": "Add item", "opens": "chatForm:newItem" }
+      }
+    }
+  ],
+  "fab": {
+    "type": "extendedFab",
+    "label": "Add item",
+    "icon": "plus",
+    "bg": "project.color",
+    "color": "onColor",
+    "position": "bottom-right, 16 from edges, above safe area",
+    "action": "openChatForm:newItem"
+  },
+  "sheets": {
+    "editItem": "see sheets.json#editItem"
+  },
+  "states": { "loading": "skeleton header and 4 rows", "notFound": "message and Back button", "archivedProject": "read-only banner with Restore" }
+}
