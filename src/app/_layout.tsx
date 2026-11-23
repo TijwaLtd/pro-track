@@ -94,7 +94,7 @@ export default function RootLayout() {
     setBootError(null);
     try {
       getDb(); // open DB, run migrations, verify FK + integrity
-      seedDemoDataIfEmpty(); // dev-only demo data on first launch
+      seedDemoDataIfEmpty(); // demo data on first launch when the database is empty
       const elapsed = Date.now() - bootStart.current;
       if (elapsed < SPLASH_MIN_MS) {
         await new Promise((r) => setTimeout(r, SPLASH_MIN_MS - elapsed));

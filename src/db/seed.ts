@@ -3,8 +3,8 @@ import { createItem } from './repositories/items';
 import { createProject } from './repositories/projects';
 
 /**
- * Development seed: a single maize-farming project with its input costs.
- * Runs once, only in dev builds, and only when the projects table is empty.
+ * Demo seed: a single maize-farming project with its input costs.
+ * Runs only when the projects table is empty, in development and production builds.
  * Amounts are whole KES -> minor units (x100).
  */
 
@@ -99,8 +99,7 @@ export function seedDemoData(): boolean {
   return true;
 }
 
-/** Dev-only auto-seed on first launch. */
+/** Auto-seed on first launch in any build when there are no projects yet. */
 export function seedDemoDataIfEmpty(): void {
-  if (!__DEV__) return;
   seedDemoData();
 }

@@ -122,9 +122,10 @@ export function ChatForm() {
   }, []);
 
   useEffect(() => {
-    if (!open) return;
-    const t = setTimeout(reset, 0);
-    return () => clearTimeout(t);
+    if (!open) {
+      const t = setTimeout(reset, 0);
+      return () => clearTimeout(t);
+    }
   }, [open, reset]);
 
   // Push the app question for the current step (with typing dots first).
@@ -170,12 +171,12 @@ export function ChatForm() {
     if (answers[f] !== undefined) return;
     const step = currentStep;
     const t = setTimeout(() => {
-      if (step.default !== undefined) {
-        setAnswers((a) => (a[f] === undefined ? { ...a, [f]: step.default } : a));
-      } else if (step.type === 'avatar' && f === 'avatar_key') {
+      if (step.type === 'avatar' && f === 'avatar_key') {
         // random avatar not already used in this project (avatars.json defaultRule)
         const used = new Set<string>((ctx.usedAvatarKeys as string[] | undefined) ?? []);
         setAnswers((a) => (a[f] === undefined ? { ...a, [f]: pickRandomAvatar(used).key } : a));
+      } else if (step.default !== undefined) {
+        setAnswers((a) => (a[f] === undefined ? { ...a, [f]: step.default } : a));
       }
     }, 0);
     return () => clearTimeout(t);
@@ -255,17 +256,17 @@ export function ChatForm() {
   }, [isSummary, currentStep?.id]);
 
   const handleConfirm = useCallback(async () => {
-    if (!flow || confirming) return;
+    if (!flowName || confirming) return;
     setConfirming(true);
     try {
-      const { payload } = await confirmFlow(flow as never, answers, ctx);
+      const { payload } = await confirmFlow(flowName, answers, ctx);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       closeForm(true, answers, payload);
     } catch (err) {
       setConfirming(false);
       Alert.alert('Could not save', err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     }
-  }, [flow, confirming, answers, ctx, closeForm]);
+  }, [flowName, confirming, answers, ctx, closeForm]);
 
   const handleClose = useCallback(() => {
     if (Object.keys(answers).length > 0) {
